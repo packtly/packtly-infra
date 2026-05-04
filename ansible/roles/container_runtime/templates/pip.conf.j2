@@ -1,0 +1,6 @@
+[global]
+break-system-packages = true
+{% if extra_pypi_username is defined and extra_pypi_password is defined %}
+extra-index-url = https://{{ extra_pypi_username }}:{{ extra_pypi_password }}@tomhp.fritz.box:8888/api/v4/projects/126/packages/pypi/simple
+trusted-host = tomhp.fritz.box
+{% endif %}

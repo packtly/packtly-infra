@@ -1,0 +1,36 @@
+---
+- name: Bootstrap packtly host
+  hosts: all
+  gather_facts: false
+  remote_user: "{{ bootstrap_user | default(omit) }}"
+  become: true
+
+  pre_tasks:
+    - name: Require explicit --limit to prevent accidental full deployment
+      ansible.builtin.assert:
+        that: ansible_limit is defined and ansible_limit | length > 0
+        fail_msg: "You must specify a target with --limit <group-or-host>"
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: container_runtime
+    - ansible.builtin.import_role:
+        name: packtly_secrets
+    - ansible.builtin.import_role:
+        name: packtly_service
+        tasks_from: user
+
+- name: Deploy packtly service
+  hosts: all
+  gather_facts: false
+  remote_user: "{{ service_user | default(omit) }}"
+  become: "{{ (ansible_connection == 'local') | bool }}"
+  become_user: "{{ service_user }}"
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: packtly_service
+        tasks_from: deploy
+    - ansible.builtin.import_role:
+        name: sshconfig
+

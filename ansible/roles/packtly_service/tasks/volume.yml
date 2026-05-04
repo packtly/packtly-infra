@@ -1,0 +1,160 @@
+---
+###############################################################################
+# Reset Podman storage and secrets if a full recreation is requested
+###############################################################################
+
+- block:
+
+    - name: Remove existing Podman volume
+      containers.podman.podman_volume:
+        name: packtly_data
+        state: absent
+
+    - name: Remove existing Podman secret for Aptly private key
+      containers.podman.podman_secret:
+        name: packtly_gpg_private_key
+        state: absent
+
+    - name: Remove existing Podman secret for Aptly passphrase
+      containers.podman.podman_secret:
+        name: packtly_gpg_passphrase
+        state: absent
+
+  ignore_errors: true
+  when: datadir_recreate | default(false)
+
+
+###############################################################################
+# Ensure Podman storage resources exist
+###############################################################################
+
+- block:
+
+    - name: Ensure Podman volume exists
+      containers.podman.podman_volume:
+        name: packtly_data
+        state: present
+
+    - name: Inspect Podman volume
+      ansible.builtin.command:
+        cmd: podman volume inspect packtly_data
+      register: packtly_volume_inspect
+      changed_when: false
+
+
+- name: Extract Podman volume mountpoint
+  ansible.builtin.set_fact:
+    packtly_volume_mountpoint: "{{ (packtly_volume_inspect.stdout | from_json | first).Mountpoint }}"
+
+
+###############################################################################
+# Load generated secrets from controller
+###############################################################################
+
+- block:
+
+    - name: Read repo signing public key
+      ansible.builtin.slurp:
+        path: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/public/repo_signing.key"
+      register: packtly_repo_signing_public_key
+
+    - name: Read SSH public key
+      ansible.builtin.slurp:
+        path: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/ssh/id_ed25519.pub"
+      register: packtly_ssh_public_key
+
+    - name: Read API credentials
+      ansible.builtin.slurp:
+        path: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/public/.htpasswd"
+      register: packtly_api_access
+
+  delegate_to: localhost
+  become: false
+
+
+###############################################################################
+# Prepare directory structure inside Podman volume
+###############################################################################
+
+- block:
+
+    - name: Ensure public directory exists
+      ansible.builtin.file:
+        path: "{{ packtly_volume_mountpoint }}/public"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure ssh directory exists
+      ansible.builtin.file:
+        path: "{{ packtly_volume_mountpoint }}/ssh"
+        state: directory
+        mode: "0755"
+
+
+###############################################################################
+# Copy public files into Podman volume
+###############################################################################
+
+- block:
+
+    - name: Copy repo signing public key
+      ansible.builtin.copy:
+        content: "{{ packtly_repo_signing_public_key.content | b64decode }}"
+        dest: "{{ packtly_volume_mountpoint }}/public/repo_signing.key"
+        mode: "0644"
+
+    - name: Copy SSH public key
+      ansible.builtin.copy:
+        content: "{{ packtly_ssh_public_key.content | b64decode }}"
+        dest: "{{ packtly_volume_mountpoint }}/ssh/id_ed25519.pub"
+        mode: "0644"
+
+    - name: Copy API access credentials
+      ansible.builtin.copy:
+        content: "{{ packtly_api_access.content | b64decode }}"
+        dest: "{{ packtly_volume_mountpoint }}/public/.htpasswd"
+        mode: "0644"
+
+
+###############################################################################
+# Load private secrets from controller
+###############################################################################
+
+- block:
+
+    - name: Read Aptly private key
+      ansible.builtin.slurp:
+        path: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/private/repo_signing_private.key"
+      register: packtly_private_key_secret
+      no_log: true
+
+    - name: Read Aptly passphrase
+      ansible.builtin.slurp:
+        path: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/private/repo_signing_private_pass"
+      register: packtly_passphrase_secret
+      no_log: true
+
+  delegate_to: localhost
+  become: false
+
+
+###############################################################################
+# Create Podman secrets for container usage
+###############################################################################
+
+- block:
+
+    - name: Ensure Podman secret exists for Aptly private key
+      containers.podman.podman_secret:
+        state: present
+        name: packtly_gpg_private_key
+        data: "{{ packtly_private_key_secret.content | b64decode }}"
+      no_log: true
+
+    - name: Ensure Podman secret exists for Aptly passphrase
+      containers.podman.podman_secret:
+        state: present
+        name: packtly_gpg_passphrase
+        data: "{{ packtly_passphrase_secret.content | b64decode }}"
+      no_log: true
+

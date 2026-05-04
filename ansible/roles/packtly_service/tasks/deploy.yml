@@ -1,0 +1,20 @@
+---
+- name: Stop and remove container service
+  include_tasks: teardown.yml
+
+- name: Pull container image if selected
+  include_tasks: image_pull.yml
+  when: container_method == 'pull'
+
+- name: Build container image if selected
+  include_tasks: image_build.yml
+  when: container_method == 'build'
+
+- name: Create packtly volume
+  include_tasks: volume.yml
+
+- name: Provision of the packtly volume
+  include_tasks: provision.yml
+
+- name: Start container service
+  include_tasks: service.yml

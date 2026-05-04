@@ -1,0 +1,20 @@
+[Container]
+Image={{ container_registry if container_method == 'pull' else container_image_local }}
+ContainerName={{ container_name }}
+HostName={{ app_name }}
+
+Volume=packtly_data:/opt/packtly
+
+Secret=packtly_gpg_private_key
+Secret=packtly_gpg_passphrase
+
+PublishPort={{ web_port }}:80
+PublishPort={{ ssh_port }}:22
+
+Network=packtlynet
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

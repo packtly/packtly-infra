@@ -1,0 +1,2 @@
+hostname: "localhost"
+identity_file: "{{ playbook_dir }}/generated-secrets/{{ inventory_hostname }}/ssh/id_ed25519.openssh"

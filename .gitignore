@@ -1,0 +1,5 @@
+data/*
+**/logs/*
+.setup
+.dev-secrets/*
+ansible/generated-secrets/*

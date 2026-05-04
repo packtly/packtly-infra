@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REQ_FILE="${SCRIPT_DIR}/../requirements.txt"
+
+# Ensure user-local bin is on PATH for pip-installed CLIs
+export PATH="${PATH}:$(python3 -m site --user-base)/bin"
+
+# Install pip if missing
+python3 -m ensurepip --upgrade >/dev/null 2>&1 || true
+python3 -m pip install --user --break-system-packages --upgrade -r "${REQ_FILE}"

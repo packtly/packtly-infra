@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GIT_TOPDIR=$(git rev-parse --show-toplevel)
+
+GNUPGHOME="${1:-${GIT_TOPDIR}/ansible/generated-secrets/localhost/gpg}"
+
+echo "==== GNUPGHOME ===="
+echo "$GNUPGHOME"
+echo
+
+echo "==== GPG public keys ===="
+gpg --homedir "$GNUPGHOME" \
+    --list-keys \
+    --keyid-format LONG
+echo
+
+echo "==== GPG secret keys ===="
+gpg --homedir "$GNUPGHOME" \
+    --list-secret-keys \
+    --keyid-format LONG
+echo
+
+echo "==== Raw machine-readable keys ===="
+gpg --homedir "$GNUPGHOME" \
+    --list-secret-keys \
+    --with-colons

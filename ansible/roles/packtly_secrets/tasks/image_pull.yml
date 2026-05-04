@@ -1,0 +1,16 @@
+---
+- name: Print container method
+  ansible.builtin.debug:
+    msg: "Container method is set to '{{ container_method }}'"
+
+- name: Podman login (rootless)
+  containers.podman.podman_login:
+    registry: "{{ container_registry_url }}"
+    username: "{{ container_registry_username }}"
+    password: "{{ container_registry_password }}"
+
+- name: Pull image from registry
+  containers.podman.podman_image:
+    name: "{{ container_registry }}"
+    state: present
+

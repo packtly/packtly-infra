@@ -1,0 +1,40 @@
+---
+- name: Check if service user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ service_user }}"
+  register: service_user_info
+  failed_when: false
+
+- name: Run teardown only if user exists
+  block:
+
+    - name: Set home_dir
+      ansible.builtin.set_fact:
+        home_dir: "{{ service_user_info.ansible_facts.getent_passwd[service_user][4] }}"
+
+    - name: Stop container service (user scope)
+      ansible.builtin.systemd_service:
+        name: "{{ container_name }}"
+        state: stopped
+        enabled: false
+        scope: user
+      failed_when: false
+
+    - name: Remove quadlet definition
+      ansible.builtin.file:
+        path: "{{ home_dir }}/.config/containers/systemd/{{ container_name }}.container"
+        state: absent
+
+    - name: Reload user systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+        scope: user
+
+    - name: Remove container
+      containers.podman.podman_container:
+        name: "{{ container_name }}"
+        state: absent
+      failed_when: false
+
+  when: service_user_info.ansible_facts.getent_passwd is defined

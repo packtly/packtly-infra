@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+
+APTLY_CMD="/usr/bin/aptly"
+
+GPG_KEYID="$(gpg --list-keys --with-colons | awk -F: '/^fpr/{print $10; exit}')"
+PASSPHRASE_FILE="/run/secrets/packtly_gpg_passphrase"
+
+REPO_LIST=""
+
+usage() {
+    echo "Usage: $0 -r <repo1,repo2> [-k keyid] [-p passfile]"
+    exit 1
+}
+
+while getopts ":r:c:k:p:" opt; do
+    case "$opt" in
+        r) REPO_LIST="$OPTARG" ;;
+        k) GPG_KEYID="$OPTARG" ;;
+        p) PASSPHRASE_FILE="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
+
+[ -z "$REPO_LIST" ] && usage
+
+# Convert repo list to space-separated
+REPO_ARGS="${REPO_LIST//,/ }"
+
+echo "Publishing repos: $REPO_ARGS"
+
+exec $APTLY_CMD \
+  -passphrase-file="$PASSPHRASE_FILE" \
+  -gpg-key="$GPG_KEYID" \
+  publish repo \
+  -component="," \
+  $REPO_ARGS

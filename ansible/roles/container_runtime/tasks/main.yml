@@ -1,0 +1,8 @@
+---
+- block:
+  - name: Create pip configuration
+    include_tasks: pip.yml
+    when: extra_pypi_username is defined and extra_pypi_password is defined
+
+  delegate_to: localhost
+  become: false

@@ -1,0 +1,25 @@
+{
+	"name": "packtly-infra",
+	"dockerComposeFile": "../packtly-infra/podman-compose.yml",
+	"service": "packtly-infra",
+	"workspaceFolder": "/workspace",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.autopep8",
+				"foxundermoon.shell-format",
+				"mhutchie.git-graph"
+			],
+			"settings": {
+				"terminal.integrated.profiles.linux": {
+					"bash": null,
+					"zsh": {
+						"path": "/usr/bin/zsh"
+					}
+				},
+				"terminal.integrated.defaultProfile.linux": "zsh"
+			}
+		}
+	}
+}

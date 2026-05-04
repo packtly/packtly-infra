@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -eu
+TARGET="${1:-dev}"
+
+SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)"
+(
+    cd "${SCRIPT_DIR}/.."
+    ansible-playbook \
+        -i inventories/hosts.yml ansible/packtly_setup.yml \
+        --ask-vault-pass \
+        --limit "${TARGET}"
+)

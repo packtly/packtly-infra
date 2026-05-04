@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+# Define a cleanup function
+cleanup() {
+    echo "Caught SIGINT or SIGTERM, stopping sshd..."
+    kill -TERM "$APTLY_PID" 2>/dev/null
+    wait "$APTLY_PID"
+    exit 0
+}
+
+trap cleanup INT TERM
+
+/usr/bin/aptly api serve -no-lock -listen=:8080 &
+APTLY_PID=$!
+
+# Wait for sshd to exit
+wait "$APTLY_PID"

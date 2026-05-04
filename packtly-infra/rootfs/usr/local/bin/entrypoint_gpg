@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Define Aptly directory and key paths
+APTLY_SIGNING_PUBLIC="/opt/packtly/public/repo_signing.key"
+APTLY_SIGNING_PRIVATE="/run/secrets/packtly_gpg_private_key"
+APTLY_SIGNING_PRIVATE_PASS="/run/secrets/packtly_gpg_passphrase"
+
+# Function to handle errors
+function error_exit {
+    echo "$1" 1>&2
+    exit 1
+}
+
+# Check if all required files exist
+if [[ -f "${APTLY_SIGNING_PUBLIC}" ]] && [[ -f "${APTLY_SIGNING_PRIVATE}" ]] && [[ -f "${APTLY_SIGNING_PRIVATE_PASS}" ]]; then
+    echo "Importing Aptly signing keys..."
+
+    # Import the public key
+    if gpg --import "${APTLY_SIGNING_PUBLIC}"; then
+        echo "Public key imported successfully."
+    else
+        error_exit "Error: Failed to import the public key."
+    fi
+
+    # Import the private key with the passphrase
+    if gpg --batch --yes --passphrase-file "${APTLY_SIGNING_PRIVATE_PASS}" --import "${APTLY_SIGNING_PRIVATE}"; then
+        echo "Private key imported successfully."
+        gpg-connect-agent reloadagent /bye
+        echo "GPG agent reloaded."
+    else
+        error_exit "Error: Failed to import the private key."
+    fi
+
+else
+    error_exit "Error: One or more Aptly signing key files are missing. Ensure the following files exist:
+    - ${APTLY_SIGNING_PUBLIC}
+    - ${APTLY_SIGNING_PRIVATE}
+    - ${APTLY_SIGNING_PRIVATE_PASS}"
+fi

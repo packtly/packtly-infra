@@ -1,0 +1,47 @@
+version: "4"
+services:
+  packtly:
+    build:
+      context: .
+      dockerfile: Containerfile
+      #secrets:
+      #  - pip.conf
+    image: packtly-infra:latest
+    volumes:
+      - packtly_data:/opt/packtly
+    ports:
+      - "8080:80"
+      - "2222:22"
+    secrets:
+      - packtly_gpg_private_key
+      - packtly_gpg_passphrase  
+
+  packtly-setup:
+    build:
+      context: .
+      dockerfile: Containerfile
+      #secrets:
+      #  - pip.conf
+    image: packtly-infra:latest
+    volumes:
+      - ..:/workspace:Z
+      # - ${HOME}/.pip/pip.conf:/etc/pip.conf:ro
+    networks:
+      - packtlynet
+    entrypoint: ["dumb-init", "--", "sleep", "infinity"]
+
+secrets:
+  #pip.conf:
+  #  file: ${HOME}/.pip/pip.conf
+  packtly_gpg_private_key:
+    external: true
+  packtly_gpg_passphrase:
+    external: true  
+
+volumes:
+  packtly_data:
+    external: true
+
+networks:
+  packtlynet:
+    driver: bridge

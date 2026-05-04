@@ -1,0 +1,90 @@
+FROM debian:trixie
+
+ARG VERSION=dev
+ARG S6_OVERLAY_VERSION=v3.2.1.0
+
+LABEL version="${VERSION}"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Europe/Berlin \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8 \
+    GNUPGHOME=/etc/gnupg
+
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo "${TZ}" > /etc/timezone \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    bash \
+    bash-completion \
+    bzip2 \
+    ca-certificates \
+    dumb-init \
+    dropbear \
+    fzf \
+    git \
+    graphviz \
+    gnupg2 \
+    gpg-agent \
+    gpgv \
+    iproute2 \
+    iputils-ping \
+    libcap2-bin \
+    locales \
+    nano \
+    nginx \
+    procps \
+    python3 \
+    python3-pip \
+    starship \
+    tzdata \
+    wget \
+    xz-utils \
+    && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen \
+    && locale-gen \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp/
+ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp/
+
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz \
+    && tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz \
+    && rm /tmp/s6-overlay-*.tar.xz
+
+RUN setcap cap_net_raw+p /usr/bin/ping \
+    && rm -f /etc/nginx/sites-enabled/* \
+    && mkdir -p /var/run/sshd /etc/gnupg /etc/apt/keyrings \
+    && chmod 700 /etc/gnupg
+
+# Aptly installation
+RUN wget -O /etc/apt/keyrings/aptly.asc https://www.aptly.info/pubkey.txt \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends aptly \
+    && rm -rf /var/lib/apt/lists/*
+
+# Aptly bash completion
+RUN wget -P /usr/share/bash-completion/completions https://raw.githubusercontent.com/aptly-dev/aptly/v1.6.2/completion.d/aptly
+
+# Python tooling
+RUN --mount=type=secret,id=pip.conf,required=false,target=/etc/pip.conf \
+    pip install --no-cache-dir --break-system-packages --root-user-action=ignore \
+    aptly-api-client \
+    Flask
+
+# Starship prompt for bash
+RUN echo 'eval "$(starship init bash)"' >> /etc/bash.bashrc
+
+# Root filesystem (s6 services, etc.)
+ADD rootfs /
+RUN chmod 700 /etc/gnupg
+
+# Volumes, working directory, ports
+VOLUME ["/opt/packtly"]
+WORKDIR /opt/packtly
+EXPOSE 22 80 8080
+
+# Entrypoint
+ENTRYPOINT ["/init"]

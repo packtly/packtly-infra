@@ -1,0 +1,54 @@
+#!/bin/bash
+set -eu
+
+shopt -s nullglob
+
+# Define paths
+SSH_DIR="/etc/ssh"
+PUBKEYS_DIR="/opt/packtly/ssh"
+USER_HOME="${HOME:-/root}"
+AUTHORIZED_KEYS="${USER_HOME}/.ssh/authorized_keys"
+
+# Function to generate SSH host keys if they do not exist
+generate_ssh_key() {
+    local key_type=$1
+    local key_file=$2
+    local key_bits=$3
+
+    if [ ! -f "${key_file}" ]; then
+        echo "Generating ${key_type} host key..."
+        # Use -s instead of -b
+        dropbearkey -t "${key_type}" -f "${key_file}" -s "${key_bits}" || { 
+            echo "Error generating ${key_type} key" >&2
+            exit 1
+        }
+    else
+        echo "${key_type} host key already exists."
+    fi
+}
+
+# Generate SSH host keys
+generate_ssh_key "rsa" "${SSH_DIR}/ssh_host_rsa_key" 2048
+generate_ssh_key "ecdsa" "${SSH_DIR}/ssh_host_ecdsa_key" 256
+
+# Prepare authorized_keys
+mkdir -p "${USER_HOME}/.ssh"
+chmod 700 "${USER_HOME}/.ssh"
+touch "${AUTHORIZED_KEYS}"
+chmod 600 "${AUTHORIZED_KEYS}"
+
+# Add public keys to authorized_keys
+if [ -d "${PUBKEYS_DIR}" ]; then
+    echo "=> Public keys found, setting up authorized keys..."
+    for pubkey in "${PUBKEYS_DIR}"/*.pub; do
+        key=$(<"${pubkey}")
+        if ! grep -qxF "${key}" "${AUTHORIZED_KEYS}"; then
+            echo "=> Adding public key: $(basename "${pubkey}")"
+            echo "${key}" >> "${AUTHORIZED_KEYS}"
+        else
+            echo "=> Public key already exists: $(basename "${pubkey}")"
+        fi
+    done
+else
+    echo "WARNING: No public key directory found at ${PUBKEYS_DIR}."
+fi

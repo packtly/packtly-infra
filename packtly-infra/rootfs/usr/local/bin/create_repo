@@ -1,0 +1,60 @@
+#!/bin/bash
+set -euo pipefail
+
+APTLY_CMD="/usr/bin/aptly"
+DEFAULT_COMPONENT="main"
+DEFAULT_COMMENT_SUFFIX="main"
+
+# Help
+usage() {
+    echo "Usage: $0 -d <codename> [-c <component>] [-n <repo_name>] [-m <comment>] [-k <gpg_keyid>] [-p <passphrase_file>]"
+    exit 1
+}
+
+# Defaults
+COMMENT=""
+COMPONENT="$DEFAULT_COMPONENT"
+REPO_NAME=""
+while getopts ":d:c:n:m:" opt; do
+    case $opt in
+        d) CODENAME="$OPTARG" ;;
+        c) COMPONENT="$OPTARG" ;;
+        n) REPO_NAME="$OPTARG" ;;
+        m) COMMENT="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
+
+# Check required argument
+if [ -z "${CODENAME:-}" ]; then
+    usage
+fi
+
+# Set default REPO_NAME and COMMENT if not provided
+REPO_NAME=${REPO_NAME:-$CODENAME}
+COMMENT=${COMMENT:-"$CODENAME $DEFAULT_COMMENT_SUFFIX"}
+
+# Create repo if it doesn't exist
+create_repo_if_needed() {
+    local already_created=false
+    for repo in $($APTLY_CMD repo list -raw); do
+        echo "Already created repo is $repo"
+        if [[ "$repo" == "$REPO_NAME" ]]; then
+            already_created=true
+            break
+        fi
+    done
+
+    if [[ "$already_created" == true ]]; then
+        echo "Repository '$REPO_NAME' already exists."
+    else
+        echo "Creating repository '$REPO_NAME'..."
+        exec $APTLY_CMD -distribution="$CODENAME" \
+                   -component="$COMPONENT" \
+                   -comment="$COMMENT" \
+                   repo create "$REPO_NAME"
+    fi
+}
+
+# Main
+create_repo_if_needed

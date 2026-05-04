@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export PATH="${PATH}:$(python3 -m site --user-base)/bin"
+
+pipx upgrade ansible-core 2>/dev/null || pipx install ansible-core
+ansible-galaxy collection install -r "${SCRIPT_DIR}/../requirements.yml" --upgrade

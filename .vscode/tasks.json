@@ -1,0 +1,103 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Just: Run recipe",
+            "type": "shell",
+            "command": "just",
+            "args": [
+                "${input:justRecipe}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Run a selected just recipe",
+            "problemMatcher": []
+        },
+        {
+            "label": "Just: volume-create (with recreate option)",
+            "type": "shell",
+            "command": "just",
+            "args": [
+                "volume-create",
+                "recreate=${input:volumeRecreate}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "none",
+            "detail": "Create or recreate packtly volume and Podman secrets",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Ansible Playbook - Aptly Setup (production)",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/deploy",
+            "args": [
+                "${input:deployTarget}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Production deployment via Ansible"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "justRecipe",
+            "type": "pickString",
+            "description": "Select a just recipe to run",
+            "options": [
+                "all",
+                "clean",
+                "clean-all",
+                "setup-image",
+                "setup-rmimage",
+                "secrets-create",
+                "volume-create",
+                "volume-rm",
+                "create-repos",
+                "service-start",
+                "service-logs",
+                "service-stop",
+                "service-rmimage",
+                "list"
+            ],
+            "default": "all"
+        },
+        {
+            "id": "volumeRecreate",
+            "type": "pickString",
+            "description": "Reset existing volume/secrets before create",
+            "options": [
+                "false",
+                "true"
+            ],
+            "default": "false"
+        },
+        {
+            "id": "deployTarget",
+            "type": "promptString",
+            "description": "Select target host for Ansible deploy",
+            "default": "dev"
+        },
+        {
+            "id": "packtlyCommand",
+            "type": "pickString",
+            "description": "Select an packtly command to run",
+            "options": [
+                "build",
+                "rebuild",
+                "up"
+            ],
+            "default": "build"
+        }
+    ]
+}

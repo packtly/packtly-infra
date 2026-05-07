@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Just: Run recipe",
+            "label": "dev: just run recipe",
             "type": "shell",
             "command": "just",
             "args": [
@@ -21,7 +21,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Just: volume-create (with recreate option)",
+            "label": "dev: volume-create (with recreate option)",
             "type": "shell",
             "command": "just",
             "args": [
@@ -36,7 +36,7 @@
             "problemMatcher": []
         },
         {
-            "label": "Run Ansible Playbook - Aptly Setup (production)",
+            "label": "prod: run ansible playbook",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/deploy",
             "args": [
@@ -47,6 +47,19 @@
                 "isDefault": false
             },
             "detail": "Production deployment via Ansible"
+        },
+        {
+            "label": "prod: init packtly with packtly_init.py",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/scripts/packtly_init.py"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Run packtly_init.py to generate Ansible inventory"
         }
     ],
     "inputs": [

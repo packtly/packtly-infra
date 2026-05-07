@@ -10,6 +10,7 @@
     registry: "{{ container_registry_url }}"
     username: "{{ container_registry_username }}"
     password: "{{ container_registry_password }}"
+  when: container_registry_auth | default(false)
 
 - name: Pull image from registry
   become: true

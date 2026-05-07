@@ -10,6 +10,7 @@ from typing import Optional
 
 app = typer.Typer()
 
+INVENTORY_DIR : str = "inventories"
 
 @dataclass
 class Config:
@@ -19,9 +20,10 @@ class Config:
     is_local: bool
     ansible_user: str
 
-    container_registry_username: str
-    container_registry_url: str
-    container_registry_password: str
+    container_registry_auth: bool
+    container_registry_username: Optional[str]
+    container_registry_url: Optional[str]
+    container_registry_password: Optional[str]
 
     container_method: str
     container_force_rebuild: bool
@@ -78,41 +80,47 @@ def collect_config() -> Config:
         is_local = False
         ansible_user = ask("Ansible SSH user", "deploy")
 
+    registry_auth = ask_bool("Authenticate to container registry", False)
+    registry_username = (
+        ask("Container registry username", "user") if registry_auth else None
+    )
+    registry_url = ask("Container registry URL", "xxx") if registry_auth else None
+    registry_password = (
+        ask("Container registry password", secret=True) if registry_auth else None
+    )
+
     return Config(
         env_name=env_name,
         deploy_host=deploy_host,
         is_local=is_local,
         ansible_user=ansible_user,
-
-        container_registry_username=ask("Container registry username", "user"),
-        container_registry_url=ask("Container registry URL", "xxx"),
-        container_registry_password=ask("Container registry password", secret=True),
-
-        container_method=ask("Container method (build/pull)", "build"),
+        container_registry_auth=registry_auth,
+        container_registry_username=registry_username,
+        container_registry_url=registry_url,
+        container_registry_password=registry_password,
+        container_method=ask("Container method (build/pull)", "pull"),
         container_force_rebuild=ask_bool("Force rebuild", False),
-        container_registry=ask("Container registry image source", "xxx"),
-        container_image_local=ask("Local container image", "packtly-infra:dev"),
-
+        container_registry=ask("Container registry image source", "ghcr.io/packtly/packtly-infra:latest"),
+        container_image_local=ask(
+            "Local container image", "packtly-infra:dev"
+        ),
         service_user=ask("Service user", "packtly"),
         container_name=ask("Container name", "packtly"),
         datadir=ask("Data volume name", "packtly_data"),
         datadir_recreate=ask_bool("Recreate data dir", True),
-
         web_port=int(ask("Web port", "8080")),
         ssh_port=int(ask("SSH port", "2222")),
         app_name=ask("App name", "packtly"),
-
         gpg_user=ask("GPG user", "packtly"),
         gpg_email=ask("GPG email", "user@example.com"),
         api_user=ask("API user", "admin"),
-
         become_pass=ask("Sudo become password", secret=True),
         gpg_pass=ask("GPG passphrase", secret=True),
         api_pass=ask("API password", secret=True),
     )
 
 
-def write_inventory(cfg: Config, inventories_dir="inventories"):
+def write_inventory(cfg: Config, inventories_dir=INVENTORY_DIR):
     """Write Ansible inventory file based on config"""
     os.makedirs(inventories_dir, exist_ok=True)
     hosts_file = os.path.join(inventories_dir, "hosts.yml")
@@ -137,9 +145,7 @@ def write_inventory(cfg: Config, inventories_dir="inventories"):
             "bootstrap_user": cfg.ansible_user,
         }
 
-    inventory["all"]["children"][cfg.env_name] = {
-        "hosts": {cfg.deploy_host: host_vars}
-    }
+    inventory["all"]["children"][cfg.env_name] = {"hosts": {cfg.deploy_host: host_vars}}
 
     with open(hosts_file, "w", encoding="utf-8") as f:
         yaml.safe_dump(inventory, f, sort_keys=False)
@@ -147,7 +153,7 @@ def write_inventory(cfg: Config, inventories_dir="inventories"):
     return hosts_file
 
 
-def write_group_vars(cfg: Config, inventories_dir="inventories_2"):
+def write_group_vars(cfg: Config, inventories_dir=INVENTORY_DIR):
     """Write group_vars file based on config"""
     group_vars_dir = os.path.join(inventories_dir, "group_vars", cfg.env_name)
     os.makedirs(group_vars_dir, exist_ok=True)
@@ -155,22 +161,20 @@ def write_group_vars(cfg: Config, inventories_dir="inventories_2"):
     local_file = os.path.join(group_vars_dir, "local.yml")
 
     local_data = {
+        "container_registry_auth": cfg.container_registry_auth,
         "container_registry_username": cfg.container_registry_username,
         "container_registry_url": cfg.container_registry_url,
         "container_method": cfg.container_method,
         "container_force_rebuild": cfg.container_force_rebuild,
         "container_registry": cfg.container_registry,
         "container_image_local": cfg.container_image_local,
-
         "service_user": cfg.service_user,
         "container_name": cfg.container_name,
         "datadir": cfg.datadir,
         "datadir_recreate": cfg.datadir_recreate,
-
         "web_port": cfg.web_port,
         "ssh_port": cfg.ssh_port,
         "app_name": cfg.app_name,
-
         "gpg_user": cfg.gpg_user,
         "gpg_email": cfg.gpg_email,
         "api_user": cfg.api_user,
@@ -199,13 +203,16 @@ def write_vault(cfg: Config, group_vars_dir):
 
     typer.echo("Encrypting vault file...")
 
-    subprocess.run([
-        "ansible-vault",
-        "encrypt",
-        "--output",
-        vault_file,
-        tmp_path,
-    ], check=True)
+    subprocess.run(
+        [
+            "ansible-vault",
+            "encrypt",
+            "--output",
+            vault_file,
+            tmp_path,
+        ],
+        check=True,
+    )
 
     os.unlink(tmp_path)
     return vault_file

@@ -11,6 +11,7 @@ from typing import Optional
 app = typer.Typer()
 
 INVENTORY_DIR : str = "inventories"
+DEFAULT_CONTAINER_REGISTRY : str = "ghcr.io/packtly/packtly-infra:1.0.0"
 
 @dataclass
 class Config:
@@ -100,7 +101,7 @@ def collect_config() -> Config:
         container_registry_password=registry_password,
         container_method=ask("Container method (build/pull)", "pull"),
         container_force_rebuild=ask_bool("Force rebuild", False),
-        container_registry=ask("Container registry image source", "ghcr.io/packtly/packtly-infra:latest"),
+        container_registry=ask("Container registry image source", DEFAULT_CONTAINER_REGISTRY),
         container_image_local=ask(
             "Local container image", "packtly-infra:dev"
         ),

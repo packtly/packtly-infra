@@ -35,7 +35,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: ${{ github.repository }}
-          tags: ${{ steps.context.outputs.release_version }} latest
+          tags: latest
           containerfiles: packtly-infra/Containerfile
           context: packtly-infra
           build-args: VERSION=${{ steps.context.outputs.release_version }}

@@ -37,10 +37,10 @@ jobs:
         run: |
           VERSION="${{ steps.context.outputs.release_version }}"
           IMAGE="ghcr.io/${{ github.repository }}"
-          podman pull "${IMAGE}:${VERSION}"
-          podman tag  "${IMAGE}:${VERSION}" "${IMAGE}:latest"
+
+          podman pull "${IMAGE}:latest"
+          podman tag "${IMAGE}:latest" "${IMAGE}:${VERSION}"
           podman push "${IMAGE}:${VERSION}"
-          podman push "${IMAGE}:latest"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

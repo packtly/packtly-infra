@@ -2,6 +2,7 @@
 
 import yaml
 import os
+import shutil
 import tempfile
 import subprocess
 from dataclasses import dataclass
@@ -204,9 +205,16 @@ def write_vault(cfg: Config, group_vars_dir):
 
     typer.echo("Encrypting vault file...")
 
+    local_bin = os.path.expanduser("~/.local/bin")
+    search_path = os.environ.get("PATH", "") + os.pathsep + local_bin
+    ansible_vault = shutil.which("ansible-vault", path=search_path)
+    if ansible_vault is None:
+        typer.echo("ansible-vault not found. Install ansible or ensure ~/.local/bin is in PATH.", err=True)
+        raise typer.Exit(1)
+
     subprocess.run(
         [
-            "ansible-vault",
+            ansible_vault,
             "encrypt",
             "--output",
             vault_file,

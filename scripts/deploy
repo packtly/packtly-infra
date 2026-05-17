@@ -3,6 +3,8 @@
 set -eu
 TARGET="${1:-dev}"
 
+USER_BIN_PATH="$(python3 -m site --user-base)/bin"
+export PATH="${PATH}:${USER_BIN_PATH}"
 SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)"
 (
     cd "${SCRIPT_DIR}/.."

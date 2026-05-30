@@ -2,7 +2,24 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-export PATH="${PATH}:$(python3 -m site --user-base)/bin"
 
-pipx upgrade ansible-core 2>/dev/null || pipx install ansible-core
+USER_BIN="$(python3 -m site --user-base)/bin"
+export PATH="${PATH}:${USER_BIN}"
+
+# Persist to ~/.bashrc if not already present
+if ! grep -qF "${USER_BIN}" "${HOME}/.bashrc"; then
+    printf '\nexport PATH="${PATH}:%s"\n' "${USER_BIN}" >> "${HOME}/.bashrc"
+    echo "Added ${USER_BIN} to ~/.bashrc"
+fi
+
+PIPX_PACKAGES=(
+    ansible-core
+    ansible-lint
+    yamllint
+)
+
+for package in "${PIPX_PACKAGES[@]}"; do
+    pipx upgrade "${package}" 2>/dev/null || pipx install "${package}"
+done
+
 ansible-galaxy collection install -r "${SCRIPT_DIR}/../requirements.yml" --upgrade

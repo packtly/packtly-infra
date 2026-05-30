@@ -4,6 +4,48 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "ansible: install",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/install-requirements && ${workspaceFolder}/scripts/install-ansible",
+            "problemMatcher": []
+        },
+        {
+            "label": "ansible: lint",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/ansible-lint",
+            "problemMatcher": [
+                {
+                    "owner": "yamllint",
+                    "fileLocation": "absolute",
+                    "severity": "error",
+                    "pattern": {
+                        "regexp": "^(.+):(\\d+):(\\d+): \\[(error|warning)\\] (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                },
+                {
+                    "owner": "ansible-lint",
+                    "fileLocation": "absolute",
+                    "pattern": [
+                        {
+                            "regexp": "^([\\w-]+(?:\\[[\\w-]+\\])?): (.+)$",
+                            "message": 2
+                        },
+                        {
+                            "regexp": "^(.+):(\\d+)(?::(\\d+))? Task/Handler:",
+                            "file": 1,
+                            "line": 2,
+                            "column": 3
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "label": "dev: just run recipe",
             "type": "shell",
             "command": "just",

@@ -27,21 +27,33 @@
   delegate_to: localhost
   become: false
 
+- name: Define Podman build secret args
+  ansible.builtin.set_fact:
+    podman_build_extra_args: >-
+      {{
+        '--secret=id=pip.conf,src='
+        + temp_dir.path
+        + '/pip.conf'
+        if temp_dir is defined and temp_dir.path is defined
+        else ''
+      }}
+
 - name: Build the container locally
   containers.podman.podman_image:
     name: "{{ container_image_local }}"
     tag: latest
-    path: "{{ git_topdir.stdout | trim }}/packtly-infra"  # Build context matches Containerfile location
+    path: "{{ git_topdir.stdout | trim }}/packtly-infra"
     state: present
     build:
-      file: "Containerfile"  # Relative to `path`
-      extra_args: "{{ '--secret=id=pip.conf,src=' + (temp_dir | default({})).get('path', '') + '/pip.conf' if (temp_dir | default({})).get('path') else '' }}"
+      file: "Containerfile"
+      extra_args: "{{ podman_build_extra_args }}"
   delegate_to: localhost
   become: false
 
 - name: Define image archive path
   ansible.builtin.set_fact:
-    image_archive: "/tmp/{{ container_image_local | replace(':', '_') }}.tar"
+    image_archive: >-
+      /tmp/{{ container_image_local | replace(':', '_') }}.tar
 
 - name: Export locally built image
   containers.podman.podman_save:

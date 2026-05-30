@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/../ansible"
+
+export PATH="${PATH}:$(python3 -m site --user-base)/bin"
+export PYTHONUNBUFFERED=1
+
+GITHUB_FORMAT=false
+SARIF_FILE="${SCRIPT_DIR}/ansible-lint.sarif"
+
+for arg in "$@"; do
+    case "$arg" in
+        --github-format)
+            GITHUB_FORMAT=true
+            ;;
+    esac
+done
+
+EXIT_CODE=0
+
+run_yamllint() {
+    if [[ "${GITHUB_FORMAT}" == "true" ]]; then
+        yamllint --format github . || return $?
+    else
+        yamllint . || return $?
+    fi
+}
+
+run_ansible_lint() {
+    if [[ "${GITHUB_FORMAT}" == "true" ]]; then
+        ansible-lint -f sarif > "${SARIF_FILE}" || return $?
+    else
+        ansible-lint || return $?
+    fi
+}
+
+run_yamllint || EXIT_CODE=$?
+run_ansible_lint || EXIT_CODE=$?
+
+exit "${EXIT_CODE}"

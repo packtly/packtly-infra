@@ -46,6 +46,32 @@
             ]
         },
         {
+            "label": "ansible: run ansible playbook",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/deploy",
+            "args": [
+                "${input:deployTarget}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Run Ansible playbook for deployment"
+        },
+        {
+            "label": "ansible: init packtly with packtly_init.py",
+            "type": "shell",
+            "command": "python3",
+            "args": [
+                "${workspaceFolder}/scripts/packtly_init.py"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Run packtly_init.py to generate Ansible inventory"
+        },
+        {
             "label": "dev: just run recipe",
             "type": "shell",
             "command": "just",
@@ -76,32 +102,6 @@
             "group": "none",
             "detail": "Create or recreate packtly volume and Podman secrets",
             "problemMatcher": []
-        },
-        {
-            "label": "prod: run ansible playbook",
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/deploy",
-            "args": [
-                "${input:deployTarget}"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "detail": "Production deployment via Ansible"
-        },
-        {
-            "label": "prod: init packtly with packtly_init.py",
-            "type": "shell",
-            "command": "python3",
-            "args": [
-                "${workspaceFolder}/scripts/packtly_init.py"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": false
-            },
-            "detail": "Run packtly_init.py to generate Ansible inventory"
         }
     ],
     "inputs": [

@@ -11,6 +11,38 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ansible and dependencies
+        run: |
+          ./scripts/install-requirements
+          ./scripts/install-ansible
+
+      - name: Run Ansible Lint
+        run: ./scripts/ansible-lint --github-format
+        continue-on-error: true
+
+      - name: Upload SARIF results
+        if: >-
+          always() &&
+          !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: scripts/ansible-lint.sarif
+          category: ansible-lint
+
   build:
     runs-on: ubuntu-24.04
     permissions: 

@@ -1,20 +1,21 @@
 ---
 - name: Set current user and home directory
   ansible.builtin.set_fact:
-    current_user: "{{ lookup('env', 'USER') }}"
-    home_dir: "{{ lookup('env', 'HOME') }}"
+    sshconfig_current_user: "{{ lookup('env', 'USER') }}"
+    sshconfig_home_dir: "{{ lookup('env', 'HOME') }}"
   delegate_to: localhost
   become: false
 
-- ansible.builtin.debug:
-    msg: "Configuring SSH for user '{{ current_user }}', home: {{ home_dir }}"
+- name: Show SSH configuration target user
+  ansible.builtin.debug:
+    msg: "Configuring SSH for user '{{ sshconfig_current_user }}', home: {{ sshconfig_home_dir }}"
   delegate_to: localhost
   become: false
 
 - name: Set SSH paths
   ansible.builtin.set_fact:
-    ssh_dir: "{{ home_dir }}/.ssh"
-    ssh_config_d: "{{ home_dir }}/.ssh/config.d"
+    sshconfig_ssh_dir: "{{ sshconfig_home_dir }}/.ssh"
+    sshconfig_ssh_config_d: "{{ sshconfig_home_dir }}/.ssh/config.d"
   delegate_to: localhost
   become: false
 
@@ -23,30 +24,30 @@
     path: "{{ item }}"
     state: directory
     mode: "0700"
-    owner: "{{ current_user }}"
+    owner: "{{ sshconfig_current_user }}"
   loop:
-    - "{{ ssh_dir }}"
-    - "{{ ssh_config_d }}"
+    - "{{ sshconfig_ssh_dir }}"
+    - "{{ sshconfig_ssh_config_d }}"
   delegate_to: localhost
   become: false
   run_once: true
 
 - name: Ensure ~/.ssh/config includes config.d/*
   ansible.builtin.lineinfile:
-    path: "{{ ssh_dir }}/config"
+    path: "{{ sshconfig_ssh_dir }}/config"
     line: "Include config.d/*"
     create: true
     insertafter: BOF
-    owner: "{{ current_user }}"
+    owner: "{{ sshconfig_current_user }}"
     mode: "0600"
   delegate_to: localhost
   become: false
   run_once: true
 
-- name: packtly ssh config
+- name: Packtly ssh config
   ansible.builtin.template:
     src: packtly.j2
-    dest: "{{ ssh_config_d }}/packtly-{{ inventory_hostname }}"
+    dest: "{{ sshconfig_ssh_config_d }}/packtly-{{ inventory_hostname }}"
     mode: "0600"
   delegate_to: localhost
   become: false

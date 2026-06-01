@@ -7,14 +7,14 @@
 
 - name: Get Git top-level directory
   ansible.builtin.command: git rev-parse --show-toplevel
-  register: git_topdir
+  register: packtly_service_git_topdir
   changed_when: false
   delegate_to: localhost
   become: false
 
 - name: Debug Git top-level directory
   ansible.builtin.debug:
-    msg: "Git top directory is {{ git_topdir.stdout }}"
+    msg: "Git top directory is {{ packtly_service_git_topdir.stdout }}"
   delegate_to: localhost
   become: false
 
@@ -29,7 +29,7 @@
 
 - name: Define Podman build secret args
   ansible.builtin.set_fact:
-    podman_build_extra_args: >-
+    packtly_service_podman_build_extra_args: >-
       {{
         '--secret=id=pip.conf,src='
         + temp_dir.path
@@ -42,45 +42,45 @@
   containers.podman.podman_image:
     name: "{{ container_image_local }}"
     tag: latest
-    path: "{{ git_topdir.stdout | trim }}/packtly-infra"
+    path: "{{ packtly_service_git_topdir.stdout | trim }}/packtly-infra"
     state: present
     build:
       file: "Containerfile"
-      extra_args: "{{ podman_build_extra_args }}"
+      extra_args: "{{ packtly_service_podman_build_extra_args }}"
   delegate_to: localhost
   become: false
 
 - name: Define image archive path
   ansible.builtin.set_fact:
-    image_archive: >-
+    packtly_service_image_archive: >-
       /tmp/{{ container_image_local | replace(':', '_') }}.tar
 
 - name: Export locally built image
   containers.podman.podman_save:
     image: "{{ container_image_local }}"
-    dest: "{{ image_archive }}"
+    dest: "{{ packtly_service_image_archive }}"
   delegate_to: localhost
   become: false
 
 - name: Copy image archive to remote host
   ansible.builtin.copy:
-    src: "{{ image_archive }}"
-    dest: "{{ image_archive }}"
+    src: "{{ packtly_service_image_archive }}"
+    dest: "{{ packtly_service_image_archive }}"
     mode: "0644"
 
 - name: Load image from tar archive
   containers.podman.podman_load:
-    input: "{{ image_archive }}"
+    input: "{{ packtly_service_image_archive }}"
 
 - name: Remove remote image archive
   ansible.builtin.file:
-    path: "{{ image_archive }}"
+    path: "{{ packtly_service_image_archive }}"
     state: absent
   become: false
 
 - name: Remove local image archive
   ansible.builtin.file:
-    path: "{{ image_archive }}"
+    path: "{{ packtly_service_image_archive }}"
     state: absent
   delegate_to: localhost
   become: false

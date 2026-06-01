@@ -3,7 +3,7 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ service_user }}"
-  register: user_check
+  register: packtly_service_user_check
   failed_when: false
 
 - name: Create service user
@@ -13,38 +13,44 @@
     shell: /bin/bash
     create_home: true
     state: present
-  when: user_check.ansible_facts.getent_passwd is not defined
+  when: packtly_service_user_check.ansible_facts.getent_passwd is not defined
 
 - name: Get service user UID
   ansible.builtin.getent:
     database: passwd
     key: "{{ service_user }}"
-  register: service_user_info
+  register: packtly_service_service_user_info
 
 - name: Set service user UID fact
   ansible.builtin.set_fact:
-    service_user_uid: "{{ service_user_info.ansible_facts.getent_passwd[service_user][1] }}"
+    packtly_service_service_user_uid: >-
+      {{
+        packtly_service_service_user_info
+        .ansible_facts
+        .getent_passwd[service_user][1]
+      }}
 
 - name: Check if lingering is enabled
   ansible.builtin.command: loginctl show-user {{ service_user }} -p Linger
-  register: linger_check
+  register: packtly_service_linger_check
   failed_when: false
   changed_when: false
 
 - name: Enable lingering if needed
   ansible.builtin.command:
     cmd: loginctl enable-linger {{ service_user }}
-  when: "'Linger=yes' not in linger_check.stdout"
+  changed_when: "'Linger=yes' not in packtly_service_linger_check.stdout"
+  when: "'Linger=yes' not in packtly_service_linger_check.stdout"
 
 - name: Ensure user systemd instance is running
   ansible.builtin.systemd:
-    name: "user@{{ service_user_uid }}.service"
+    name: "user@{{ packtly_service_service_user_uid }}.service"
     state: started
     scope: system
 
 - name: Wait for user bus socket to be available
   ansible.builtin.wait_for:
-    path: "/run/user/{{ service_user_uid }}/bus"
+    path: "/run/user/{{ packtly_service_service_user_uid }}/bus"
     timeout: 30
 
 - name: Authorize deploy key for service user

@@ -15,4 +15,3 @@
     name: "{{ container_registry }}"
     pull: true
     state: present
-

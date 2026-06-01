@@ -1,7 +1,7 @@
 Host packtly-{{ inventory_hostname }}
-    HostName {{ ansible_host | default(hostname) }}
+    HostName {{ ansible_host | default(sshconfig_hostname) }}
     User root
     Port {{ ssh_port }}
-    IdentityFile {{ identity_file }}
+    IdentityFile {{ sshconfig_identity_file }}
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null

@@ -1,8 +1,10 @@
 ---
-- block:
-  - name: Create pip configuration
-    include_tasks: pip.yml
-    when: extra_pypi_username is defined and extra_pypi_password is defined
-
+- name: Prepare local build environment
   delegate_to: localhost
   become: false
+  block:
+    - name: Create pip configuration
+      ansible.builtin.include_tasks: pip.yml
+      when:
+        - extra_pypi_username is defined
+        - extra_pypi_password is defined

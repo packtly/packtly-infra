@@ -18,4 +18,3 @@
   containers.podman.podman_image:
     name: "{{ container_registry }}"
     state: present
-

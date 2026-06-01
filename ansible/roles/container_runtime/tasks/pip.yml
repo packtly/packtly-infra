@@ -3,14 +3,14 @@
   ansible.builtin.tempfile:
     state: directory
     suffix: pip_config
-  register: temp_dir
+  register: container_runtime_temp_dir
 
 - name: Copy pip.conf template to temp directory
   ansible.builtin.template:
     src: pip.conf.j2
-    dest: "{{ temp_dir.path }}/pip.conf"
+    dest: "{{ container_runtime_temp_dir.path }}/pip.conf"
     mode: "0600"
 
 - name: Display the temporary path
   ansible.builtin.debug:
-    msg: "pip.conf deployed to {{ temp_dir.path }}/pip.conf"
+    msg: "pip.conf deployed to {{ container_runtime_temp_dir.path }}/pip.conf"

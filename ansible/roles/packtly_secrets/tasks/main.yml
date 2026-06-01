@@ -1,15 +1,15 @@
 ---
-- block:
-  - name: Pull container image if selected
-    include_tasks: image_pull.yml
-    when: container_method == 'pull'
-
-  - name: Build container image if selected
-    include_tasks: image_build.yml
-    when: container_method == 'build'
-
-  - name: Create Podman secret for Aptly
-    include_tasks: create_secrets.yml
-
+- name: Manage packtly secrets on localhost
   delegate_to: localhost
   become: false
+  block:
+    - name: Pull container image if selected
+      ansible.builtin.include_tasks: image_pull.yml
+      when: container_method == 'pull'
+
+    - name: Build container image if selected
+      ansible.builtin.include_tasks: image_build.yml
+      when: container_method == 'build'
+
+    - name: Create Podman secret for Aptly
+      ansible.builtin.include_tasks: create_secrets.yml

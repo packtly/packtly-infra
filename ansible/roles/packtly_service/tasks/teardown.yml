@@ -3,15 +3,15 @@
   ansible.builtin.getent:
     database: passwd
     key: "{{ service_user }}"
-  register: service_user_info
+  register: packtly_service_service_user_info
   failed_when: false
 
 - name: Run teardown only if user exists
+  when: packtly_service_service_user_info.ansible_facts.getent_passwd is defined
   block:
-
     - name: Set home_dir
       ansible.builtin.set_fact:
-        home_dir: "{{ service_user_info.ansible_facts.getent_passwd[service_user][4] }}"
+        packtly_service_home_dir: "{{ packtly_service_service_user_info.ansible_facts.getent_passwd[service_user][4] }}"
 
     - name: Stop container service (user scope)
       ansible.builtin.systemd_service:
@@ -23,7 +23,7 @@
 
     - name: Remove quadlet definition
       ansible.builtin.file:
-        path: "{{ home_dir }}/.config/containers/systemd/{{ container_name }}.container"
+        path: "{{ packtly_service_home_dir }}/.config/containers/systemd/{{ container_name }}.container"
         state: absent
 
     - name: Reload user systemd daemon
@@ -36,5 +36,3 @@
         name: "{{ container_name }}"
         state: absent
       failed_when: false
-
-  when: service_user_info.ansible_facts.getent_passwd is defined

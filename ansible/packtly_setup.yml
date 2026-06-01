@@ -12,11 +12,16 @@
         fail_msg: "You must specify a target with --limit <group-or-host>"
 
   tasks:
-    - ansible.builtin.import_role:
+    - name: Install container runtime
+      ansible.builtin.import_role:
         name: container_runtime
-    - ansible.builtin.import_role:
+
+    - name: Configure packtly secrets
+      ansible.builtin.import_role:
         name: packtly_secrets
-    - ansible.builtin.import_role:
+
+    - name: Create packtly service user
+      ansible.builtin.import_role:
         name: packtly_service
         tasks_from: user
 
@@ -28,9 +33,11 @@
   become_user: "{{ service_user }}"
 
   tasks:
-    - ansible.builtin.import_role:
+    - name: Deploy packtly service
+      ansible.builtin.import_role:
         name: packtly_service
         tasks_from: deploy
-    - ansible.builtin.import_role:
-        name: sshconfig
 
+    - name: Configure SSH client access
+      ansible.builtin.import_role:
+        name: sshconfig

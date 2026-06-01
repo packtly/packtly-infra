@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 RegEx for release version from file
 r"^\#\# \[\d{1,}[.]\d{1,}[.]\d{1,}\] \- \d{4}\-\d{2}-\d{2}$"
 -->
+## [1.0.1] - 2026-06-01
+### Changed
+- Add ansible lint
+- linted ansible code and fixed issues
+
 ## [1.0.0] - 2026-05-05
 ### Added
 - Add initial implementation of Packtly infrastructure

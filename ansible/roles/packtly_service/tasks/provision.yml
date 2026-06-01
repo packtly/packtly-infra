@@ -1,7 +1,7 @@
 ---
 - name: Start the Podman container
   containers.podman.podman_container:
-    name: "{{ setup_container }}"
+    name: "{{ packtly_service_setup_container }}"
     image: "{{ container_registry if container_method == 'pull' else container_image_local }}"
     state: started
     hostname: "{{ app_name }}"
@@ -16,13 +16,13 @@
 
 - name: Import GPG key
   containers.podman.podman_container_exec:
-    name: "{{ setup_container }}"
+    name: "{{ packtly_service_setup_container }}"
     command: >
       /usr/local/bin/entrypoint_gpg
 
 - name: Create repos
   containers.podman.podman_container_exec:
-    name: "{{ setup_container }}"
+    name: "{{ packtly_service_setup_container }}"
     command: "{{ item }}"
   loop:
     - create_repo -d trixie-apollo -c main -m "Embtom trixie" -n trixie-apollo-main
@@ -31,5 +31,5 @@
 
 - name: Remove the Podman container after finish
   containers.podman.podman_container:
-    name: "{{ setup_container }}"
+    name: "{{ packtly_service_setup_container }}"
     state: absent

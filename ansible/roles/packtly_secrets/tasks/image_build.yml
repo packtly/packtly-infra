@@ -5,12 +5,12 @@
 
 - name: Get Git top-level directory
   ansible.builtin.command: git rev-parse --show-toplevel
-  register: git_topdir
+  register: packtly_secrets_git_topdir
   changed_when: false
 
 - name: Debug Git top-level directory
   ansible.builtin.debug:
-    msg: "Git top directory is {{ git_topdir.stdout }}"
+    msg: "Git top directory is {{ packtly_secrets_git_topdir.stdout }}"
 
 - name: Remove existing local image
   containers.podman.podman_image:
@@ -19,12 +19,23 @@
     force: true
   when: container_force_rebuild
 
+- name: Define Podman build args
+  ansible.builtin.set_fact:
+    packtly_secrets_podman_build_extra_args: >-
+      {{
+        '--secret=id=pip.conf,src='
+        + temp_dir.path
+        + '/pip.conf'
+        if temp_dir is defined and temp_dir.path is defined
+        else ''
+      }}
+
 - name: Build the container locally
   containers.podman.podman_image:
     name: "{{ container_image_local }}"
     tag: latest
-    path: "{{ git_topdir.stdout | trim }}/packtly-infra"  # Build context matches Containerfile location
+    path: "{{ packtly_secrets_git_topdir.stdout | trim }}/packtly-infra"
     state: present
     build:
-      file: "Containerfile"  # Relative to `path`
-      extra_args: "{{ '--secret=id=pip.conf,src=' + (temp_dir | default({})).get('path', '') + '/pip.conf' if (temp_dir | default({})).get('path') else '' }}"
+      file: "Containerfile"
+      extra_args: "{{ packtly_secrets_podman_build_extra_args }}"

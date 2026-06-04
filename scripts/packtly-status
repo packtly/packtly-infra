@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+su - packtly -c "
+  systemctl status --user packtly.service \
+	--no-pager \
+  || echo 'packtly.service is not active'
+"

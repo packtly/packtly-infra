@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Must run as root
+if [[ $EUID -ne 0 ]]; then
+    echo "ERROR: This script must be run as root (use sudo)." >&2
+    exit 1
+fi
+
+SERVICE_USER="${1:-packtly}"
+SERVICE_NAME="${2:-packtly.service}"
+
+#
+# Verify that the user exists.
+#
+if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+    echo "ERROR: User '$SERVICE_USER' does not exist." >&2
+    exit 1
+fi
+
+#
+# Confirm the action with the user.
+#
+
+read -rp \
+    "==> This will permanently delete user '$SERVICE_USER' and ALL associated Podman resources. Continue? [y/N] " \
+    confirm
+
+case "${confirm,,}" in
+    y|yes)
+        ;;
+    *)
+        echo "Aborted."
+        exit 0
+        ;;
+esac
+
+echo
+echo "==> Stopping user service and cleaning Podman resources"
+
+sudo -u "$SERVICE_USER" -i bash <<EOF
+set +e
+
+systemctl --user stop "$SERVICE_NAME"
+systemctl --user disable "$SERVICE_NAME"
+
+podman rm -af
+podman rmi -af
+
+podman volume ls -q | xargs -r podman volume rm
+podman secret ls -q | xargs -r podman secret rm
+
+# Remove all custom networks but keep the default one.
+podman network ls --format '{{.Name}}' \
+    | grep -v '^podman$' \
+    | xargs -r podman network rm
+
+exit 0
+EOF
+
+echo
+echo "==> Terminating user session"
+
+loginctl disable-linger "$SERVICE_USER" 2>/dev/null || true
+loginctl terminate-user "$SERVICE_USER" 2>/dev/null || true
+
+sleep 1
+
+pkill -KILL -u "$SERVICE_USER" 2>/dev/null || true
+
+sleep 1
+
+echo
+echo "==> Removing user '$SERVICE_USER'"
+
+userdel -r "$SERVICE_USER"
+
+echo
+echo "==> Cleanup complete."

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 <password>"
+  exit 1
+fi
+
+password="$1"
+
+python3 - "$password" <<'EOF'
+import sys
+from passlib.hash import sha512_crypt
+
+password = sys.argv[1]
+
+hash = sha512_crypt.using(rounds=5000).hash(password)
+
+print(hash)
+EOF

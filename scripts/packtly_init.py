@@ -8,15 +8,18 @@ import subprocess
 from dataclasses import dataclass
 import typer
 from typing import Optional
+from passlib.hash import sha512_crypt
 
 app = typer.Typer()
 
-INVENTORY_DIR : str = "inventories"
-DEFAULT_CONTAINER_REGISTRY : str = "ghcr.io/packtly/packtly-infra:1.0.0"
+INVENTORY_DIR: str = "inventories"
+DEFAULT_CONTAINER_REGISTRY: str = "ghcr.io/packtly/packtly-infra:1.0.0"
+
 
 @dataclass
 class Config:
     """Configuration data collected from user input"""
+
     env_name: str
     deploy_host: str
     is_local: bool
@@ -48,6 +51,7 @@ class Config:
     become_pass: str
     gpg_pass: str
     api_pass: str
+    service_user_password: Optional[str]
 
 
 def ask(prompt: str, default: Optional[str] = None, secret: bool = False) -> str:
@@ -56,7 +60,7 @@ def ask(prompt: str, default: Optional[str] = None, secret: bool = False) -> str
     default and secret input
     """
     if secret:
-        return typer.prompt(prompt, hide_input=True)
+        return typer.prompt(prompt, hide_input=True, default="")
 
     if default is not None:
         return typer.prompt(prompt, default=default)
@@ -66,6 +70,13 @@ def ask(prompt: str, default: Optional[str] = None, secret: bool = False) -> str
 def ask_bool(prompt: str, default: bool = False) -> bool:
     """Ask a yes/no question and return a boolean"""
     return typer.confirm(prompt, default=default)
+
+
+def hash_service_user_password(raw: str) -> Optional[str]:
+    """Hash a service user password, or return None if empty."""
+    if not raw:
+        return None
+    return sha512_crypt.using(rounds=5000).hash(raw)
 
 
 def collect_config() -> Config:
@@ -102,10 +113,10 @@ def collect_config() -> Config:
         container_registry_password=registry_password,
         container_method=ask("Container method (build/pull)", "pull"),
         container_force_rebuild=ask_bool("Force rebuild", False),
-        container_registry=ask("Container registry image source", DEFAULT_CONTAINER_REGISTRY),
-        container_image_local=ask(
-            "Local container image", "packtly-infra:dev"
+        container_registry=ask(
+            "Container registry image source", DEFAULT_CONTAINER_REGISTRY
         ),
+        container_image_local=ask("Local container image", "packtly-infra:dev"),
         service_user=ask("Service user", "packtly"),
         container_name=ask("Container name", "packtly"),
         datadir=ask("Data volume name", "packtly_data"),
@@ -119,6 +130,9 @@ def collect_config() -> Config:
         become_pass=ask("Sudo become password", secret=True),
         gpg_pass=ask("GPG passphrase", secret=True),
         api_pass=ask("API password", secret=True),
+        service_user_password=hash_service_user_password(
+            ask("Service user password (leave empty to disable)", secret=True)
+        ),
     )
 
 
@@ -197,6 +211,7 @@ def write_vault(cfg: Config, group_vars_dir):
         "gpg_pass": cfg.gpg_pass,
         "api_pass": cfg.api_pass,
         "vault_container_registry_password": cfg.container_registry_password,
+        "service_user_password": cfg.service_user_password,
     }
 
     with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as tmp:
@@ -209,7 +224,10 @@ def write_vault(cfg: Config, group_vars_dir):
     search_path = os.environ.get("PATH", "") + os.pathsep + local_bin
     ansible_vault = shutil.which("ansible-vault", path=search_path)
     if ansible_vault is None:
-        typer.echo("ansible-vault not found. Install ansible or ensure ~/.local/bin is in PATH.", err=True)
+        typer.echo(
+            "ansible-vault not found. Install ansible or ensure ~/.local/bin is in PATH.",
+            err=True,
+        )
         raise typer.Exit(1)
 
     subprocess.run(

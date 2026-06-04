@@ -1,19 +1,13 @@
 ---
-- name: Check if user exists
-  ansible.builtin.getent:
-    database: passwd
-    key: "{{ service_user }}"
-  register: packtly_service_user_check
-  failed_when: false
-
 - name: Create service user
   ansible.builtin.user:
     name: "{{ service_user }}"
     comment: "packtly service user"
     shell: /bin/bash
     create_home: true
+    password: "{{ service_user_password if (service_user_password is defined and service_user_password) else omit }}"
+    update_password: "{{ 'always' if (service_user_password is defined and service_user_password) else omit }}"
     state: present
-  when: packtly_service_user_check.ansible_facts.getent_passwd is not defined
 
 - name: Get service user UID
   ansible.builtin.getent:

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+su - packtly -c "
+  journalctl --user -xeu packtly.service \
+    --no-pager \
+	-b0 \
+    -n 60 2>/dev/null \
+  || echo 'No logs found for packtly.service'
+"

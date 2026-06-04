@@ -19,6 +19,9 @@ r"^\#\# \[\d{1,}[.]\d{1,}[.]\d{1,}\] \- \d{4}\-\d{2}-\d{2}$"
 ### Changed
 - Add ansible lint
 - linted ansible code and fixed issues
+- correct formatting of SSH key generation commands in create_secrets.yml
+- add packtly service user password handling
+- add create scripts for packtly service journal and status checks
 
 ## [1.0.0] - 2026-05-05
 ### Added

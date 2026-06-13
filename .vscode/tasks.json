@@ -13,6 +13,9 @@
             "label": "ansible: lint",
             "type": "shell",
             "command": "${workspaceFolder}/scripts/ansible-lint",
+            "args": [
+                "${input:ansibleLint}"
+            ],
             "problemMatcher": [
                 {
                     "owner": "yamllint",
@@ -44,6 +47,12 @@
                     ]
                 }
             ]
+        },
+        {
+            "label": "ansible: collection build",
+            "type": "shell",
+            "command": "${workspaceFolder}/scripts/ansible-build",
+            "problemMatcher": []
         },
         {
             "label": "ansible: run ansible playbook",
@@ -105,6 +114,17 @@
         }
     ],
     "inputs": [
+        {
+            "id": "ansibleLint",
+            "type": "pickString",
+            "description": "Select Ansible linting mode",
+            "options": [
+                "",
+                "--github-format",
+                "--reviewdog"
+            ],
+            "default": ""
+        },
         {
             "id": "justRecipe",
             "type": "pickString",

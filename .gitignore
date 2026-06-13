@@ -3,3 +3,5 @@ data/*
 .setup
 .dev-secrets/*
 ansible/generated-secrets/*
+*.tar.gz
+.ansible

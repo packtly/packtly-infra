@@ -1,0 +1,24 @@
+namespace: packtly
+name: infra
+version: 0.0.0
+readme: README.md
+
+build_ignore:
+  - generated-secrets
+  - logs
+  - "*.tar.gz"
+
+authors:
+  - Thomas Willetal
+
+description: Infrastructure automation for Packtly
+
+license:
+  - MIT
+
+repository: https://github.com/packtly/packtly-infra
+issues: https://github.com/packtly/packtly-infra/issues
+
+tags:
+  - infrastructure
+  - tools

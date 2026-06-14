@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 USER_BIN="$(python3 -m site --user-base)/bin"
-export PATH="${PATH}:${USER_BIN}"
+export PATH="${USER_BIN}:${PATH}"
 
 # Persist to ~/.bashrc if not already present
 if ! grep -qF "${USER_BIN}" "${HOME}/.bashrc"; then
@@ -12,14 +12,11 @@ if ! grep -qF "${USER_BIN}" "${HOME}/.bashrc"; then
     echo "Added ${USER_BIN} to ~/.bashrc"
 fi
 
-PIPX_PACKAGES=(
-    ansible-core
-    ansible-lint
-    yamllint
-)
+# Install ansible-core as the primary package, then inject ansible-lint into
+# the same venv so both share the same ansible binary and collections path.
+pipx upgrade ansible-core 2>/dev/null || pipx install ansible-core
+pipx inject --include-apps --force ansible-core ansible-lint
 
-for package in "${PIPX_PACKAGES[@]}"; do
-    pipx upgrade "${package}" 2>/dev/null || pipx install "${package}"
-done
+pipx upgrade yamllint 2>/dev/null || pipx install yamllint
 
 ansible-galaxy collection install -r "${SCRIPT_DIR}/../requirements.yml" --upgrade

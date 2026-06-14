@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${SCRIPT_DIR}/../ansible"
+
+USER_BIN="$(python3 -m site --user-base)/bin"
+export PATH="${USER_BIN}:${PATH}"
+
+ansible-galaxy collection build --force

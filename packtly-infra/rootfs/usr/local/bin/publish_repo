@@ -24,14 +24,27 @@ done
 
 [ -z "$REPO_LIST" ] && usage
 
-# Convert repo list to space-separated
-REPO_ARGS="${REPO_LIST//,/ }"
+# Split comma-separated repo list into an array (handles single and multiple repos)
+IFS=',' read -ra REPO_ARRAY <<< "$REPO_LIST"
 
-echo "Publishing repos: $REPO_ARGS"
+echo "Publishing repos: ${REPO_ARRAY[*]}"
 
-exec $APTLY_CMD \
-  -passphrase-file="$PASSPHRASE_FILE" \
-  -gpg-key="$GPG_KEYID" \
-  publish repo \
-  -component="," \
-  $REPO_ARGS
+# printf 'Executing:'
+# printf ' %q' "$APTLY_CMD" \
+#     "-passphrase-file=$PASSPHRASE_FILE" \
+#     "-gpg-key=$GPG_KEYID" \
+#     publish repo \
+#     "${REPO_ARRAY[@]}"
+# printf '\n'
+
+COMPONENT_ARG=()
+if [ "${#REPO_ARRAY[@]}" -gt 1 ]; then
+    COMPONENT_ARG=("-component=,")
+fi
+
+exec "$APTLY_CMD" \
+    -passphrase-file="$PASSPHRASE_FILE" \
+    -gpg-key="$GPG_KEYID" \
+    publish repo \
+    "${COMPONENT_ARG[@]}" \
+    "${REPO_ARRAY[@]}"

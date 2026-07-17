@@ -1,5 +1,7 @@
 #!/bin/bash
 
+GNUPGHOME="${GNUPGHOME:-/etc/gnupg}"
+export GNUPGHOME
 # Define Aptly directory and key paths
 APTLY_SIGNING_PUBLIC="/opt/packtly/public/repo_signing.key"
 APTLY_SIGNING_PRIVATE="/run/secrets/packtly_gpg_private_key"

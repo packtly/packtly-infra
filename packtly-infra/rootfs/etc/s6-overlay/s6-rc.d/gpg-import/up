@@ -1,1 +1,2 @@
+#!/command/with-contenv sh
 /usr/local/bin/entrypoint_gpg

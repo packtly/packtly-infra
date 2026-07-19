@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APTLY_DIR="/opt/packtly"
-GNUPGHOME="${APTLY_DIR}/gpg"
+GNUPGHOME="${GNUPGHOME:-/etc/gnupg}"
 PUBLIC_KEY="${APTLY_DIR}/public/repo_signing.key"
 PRIVATE_KEY="/run/secrets/repo_signing_private.key"
 PASSPHRASE_FILE="/run/secrets/repo_signing_private_pass"

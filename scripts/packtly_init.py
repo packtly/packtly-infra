@@ -13,7 +13,7 @@ from passlib.hash import sha512_crypt
 app = typer.Typer()
 
 INVENTORY_DIR: str = "inventories"
-DEFAULT_CONTAINER_REGISTRY: str = "ghcr.io/packtly/packtly-infra:1.0.0"
+DEFAULT_CONTAINER_REGISTRY: str = "ghcr.io/packtly/packtly-infra:1.1.0"
 
 
 @dataclass

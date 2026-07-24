@@ -14,9 +14,9 @@ fi
 
 # Install ansible-core as the primary package, then inject ansible-lint into
 # the same venv so both share the same ansible binary and collections path.
-pipx upgrade ansible-core 2>/dev/null || pipx install ansible-core
+pipx upgrade ansible-core 2>/dev/null || pipx install --force ansible-core
 pipx inject --include-apps --force ansible-core ansible-lint
 
-pipx upgrade yamllint 2>/dev/null || pipx install yamllint
+pipx upgrade yamllint 2>/dev/null || pipx install --force yamllint
 
 ansible-galaxy collection install -r "${SCRIPT_DIR}/../requirements.yml" --upgrade

@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-collection:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       security-events: write
 
@@ -87,7 +87,7 @@ jobs:
           path: "ansible/*.tar.gz"
 
   build-container:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions: 
       packages: write
 

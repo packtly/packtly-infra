@@ -35,13 +35,21 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/apt-cache
+        if [ "${{ steps.apt-cache.outputs.cache-hit }}" != "true" ]; then
+          sudo apt-get update
+        fi
+        . /etc/os-release
+        qemu_package=qemu-user-static
+        if [ "$ID" = ubuntu ] && [ "$VERSION_ID" = 26.04 ]; then
+          qemu_package=qemu-user-binfmt
+        fi
         sudo apt-get update
         sudo apt-get install -y -o Dir::Cache::Archives="$HOME/apt-cache" \
           podman \
           python3-pip \
           fuse-overlayfs \
           uidmap \
-          qemu-user-static \
+          "$qemu_package" \
           yq
         sudo chown -R "$USER" ~/apt-cache
 
